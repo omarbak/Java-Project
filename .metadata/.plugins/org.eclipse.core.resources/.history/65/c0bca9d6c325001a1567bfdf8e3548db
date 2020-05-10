@@ -1,0 +1,352 @@
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.Collections;
+
+
+
+
+
+@SuppressWarnings("serial")
+public class Concentration extends JFrame {
+
+    /**
+	 * 
+	 */
+	private int randNum = ThreadLocalRandom.current().nextInt(1,10);
+	String themes = MainMenu.themes;
+	String nameplayer = MainMenu.nameplayer.toUpperCase();
+	int timer1 = MainMenu.timer1;
+	int rows = Integer.parseInt(MainMenu.rows);
+	int columns = Integer.parseInt(MainMenu.columns);
+	int scorepenalty = MainMenu.scorepenalty;
+	int countdown=MainMenu.countdown;
+
+	
+	
+	//private String imagepath = "C:\\Users\\user\\Desktop\\javapics\\";
+	private List<Card> cards; // automatically assigns JButton
+	private Card clickedCard;
+    private Card firstcard; //will be considered the first card picked
+    private Card secondcard; //will be considered the second card picked
+    private Card temporarycard; //saves firstcard in it to avoid reselecting it next turn
+    //private String image0 = "C:\\Users\\user\\Desktop\\javapics\\11.png";
+    private String sScore="0";
+    private String initialtimer;
+    private int score1=0;
+    private int counter=0;
+    private int shufflecounter=0;
+    private int highestscore = 3*rows*columns/2;
+    private int pairs = rows*columns;
+    private JTextField ScoreScreen;
+    private JTextField countdown1;
+    
+    private JLabel ScoreScreenLabel;
+    private JLabel countdown12;
+    private JPanel scorepanel;
+ 
+    private Timer timer; //flipcard timer
+    private Timer stopwatch; // stopwatch
+    
+    public Concentration(){ 
+    	initialtimer=Integer.toString(countdown);
+        
+    	createbutton();
+      
+    	panelcreation();
+            
+    
+    }
+    /////////////////****************METHODS CREATION*************************\\\\\\\\\\\\\\\\\\\  
+    
+    private void panelcreation() {
+    	
+
+    	Container mainpanel = getRootPane();
+        mainpanel.setLayout(new BorderLayout());
+        
+    	 //setting the board
+        Container secondarypanel;
+        secondarypanel = getContentPane();
+        secondarypanel.setLayout(new GridLayout(rows, columns));
+        
+        for (int g = 0 ; g<cards.size(); g++){
+            secondarypanel.add(cards.get(g));}
+        
+        scorepanel = new JPanel();
+        ScoreScreenLabel = new JLabel(nameplayer+"'s SCORE:");
+        countdown12 = new JLabel("TIMER");
+        ScoreScreen = new JTextField(sScore);
+        countdown1 = new JTextField(initialtimer);
+        countdown1.setEditable(false);
+        ScoreScreen.setEditable(false);
+        ScoreScreen.setPreferredSize( new Dimension( 50,50 ) );
+        scorepanel.add(ScoreScreenLabel);
+        scorepanel.add(ScoreScreen);
+        scorepanel.add(countdown12);
+        scorepanel.add(countdown1);
+        mainpanel.add(secondarypanel,BorderLayout.CENTER);
+        mainpanel.add(scorepanel,BorderLayout.SOUTH);
+        setTitle("Concentration Game");
+        setMinimumSize(new Dimension(600,600));
+        setPreferredSize(new Dimension(900,900)); 
+        setLocation(0,0);
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        addWindowListener(new WindowAdapter(){
+        	public void windowClosing(WindowEvent e) {
+        	try {
+        		stopwatch.stop();
+        		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        	}catch (Exception ge) {
+        		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+
+        	}
+        		
+
+        	}
+        });
+        pack();
+        setVisible(true);
+        
+    }
+
+    
+    
+    private void createbutton(){
+    	
+    	List<Card> cardsList = new ArrayList<Card>();
+        List<Integer> cardIDs = new ArrayList<Integer>();
+       
+        for (int twice = 0 ; twice <= 1 ; twice++) { //creates a list with duplicate number [0,1,2,3,0,1,2,3],
+        	 for (int i = 0; i < pairs/2; i++){//catching exception if pairs is N/A
+        		 cardIDs.add(i+randNum);
+        }}
+    		 
+        
+        Collections.shuffle(cardIDs); //shuffling the future cards emplacement on the grid
+       System.out.println("random number generation :"+ randNum);
+        System.out.println("your cards IDs after shuffling is:"+cardIDs); //check/cheating
+        
+       
+        for(int z = 0 ; z<cardIDs.size();z++) {
+    	Card card = new Card();
+    	card.setId(cardIDs.get(z));
+        card.setPreferredSize(new Dimension(500, 500));
+    	card.setIcon(new ImageIcon(getClass().getResource("gamepictures/11.png")));
+    		card.addActionListener(new ActionListener(){
+                public void actionPerformed(ActionEvent ae){
+                	clickedCard = card;
+                	System.out.println("You're pressing card"+ clickedCard.getId());
+                    assignCard(); //assigns the first click to the first card and second click to second card
+                    counter++;
+                    penalty();
+                    System.out.println("counter:  " + counter);
+
+                    
+                }
+            });
+            cardsList.add(card);
+        }
+        this.cards = cardsList;
+        
+    	
+    	
+    	
+    }
+    private void startwatch() {
+    	
+    	stopwatch = new Timer(1000,new ActionListener() {
+			public void actionPerformed(ActionEvent ae) {
+				//System.out.println("test timer has started");
+				countdown--;
+		        countdown1.setText(Integer.toString(countdown));
+        		if(countdown<=0) {
+        			 int response =  JOptionPane.showConfirmDialog(null, "TIME IS UP YOU LOST!\n Wanna Play A New Game?","Confirm",JOptionPane.YES_NO_OPTION,JOptionPane.QUESTION_MESSAGE);
+                     
+        			 if (response == JOptionPane.NO_OPTION || response == JOptionPane.CLOSED_OPTION) {
+                    	 stopwatch.stop();
+                         dispose();
+                 } 
+                     else if (response == JOptionPane.YES_OPTION) {
+                  	   dispose();
+                  	   stopwatch.stop();
+                  	   new Concentration();
+                  	   randNum=0;}}
+        		else if (countdown!=0) { gameEnds();}}});
+    	stopwatch.start();
+
+
+    }
+    
+    
+    
+    
+    
+    
+    
+    public void timerstart() {
+        timer = new Timer(timer1, new ActionListener(){ //timer start once the second card is chosen
+        	public void actionPerformed(ActionEvent ae){
+        		checkMatch();
+        	}});
+        timer.start();
+        timer.setRepeats(false);
+    }
+   
+    public void penalty() {
+    	if(shufflecounter == 0 && counter >= 2*pairs) {
+    	score1= score1 - 5;
+    	JOptionPane.showMessageDialog(null, 
+				"YOU RECEIVED A PENALTY OF -5 \n Reason: Not being able to finish the game in limited clicks", 
+				"Penalty",JOptionPane.WARNING_MESSAGE);
+    	shufflecounter++;
+    	}
+    }
+    public void assignCard(){
+    	if (counter==0 && firstcard == null && secondcard == null){
+        	startwatch();
+    		firstcard = clickedCard;
+            String IDval1 = String.valueOf(firstcard.getId()); // assigns a picture from the saved pics
+            firstcard.setIcon(new ImageIcon(getClass().getResource("gamepictures/"+themes+"/"+IDval1+".jpg")));
+                       
+    	}
+    	if (counter!=0 && firstcard == null && secondcard == null){ 
+    		firstcard = clickedCard;
+    		if(temporarycard==firstcard) { JOptionPane.showMessageDialog(null, 
+    				"You can't select the same card twice in a row", 
+    				"Warning",JOptionPane.WARNING_MESSAGE);
+    		counter--;
+    		firstcard=null;
+    			
+    		}
+
+    		else {
+    			String IDval1 = String.valueOf(firstcard.getId()); // assigns a picture from the saved pics
+                firstcard.setIcon(new ImageIcon(getClass().getResource("gamepictures/"+themes+"/"+IDval1+".jpg")));
+    		}
+    		
+    	}
+
+        else if (firstcard != null && firstcard != clickedCard && secondcard == null){
+            secondcard = clickedCard;
+            String IDval2 = String.valueOf(secondcard.getId());
+            secondcard.setIcon(new ImageIcon(getClass().getResource("gamepictures/"+themes+"/"+IDval2+".jpg")));
+    		
+            timerstart();
+
+
+        }
+
+    }
+    public void checkMatch(){
+    	
+        if (firstcard.getId() == secondcard.getId()){//match condition
+        	score1 = score1+3;
+        	countdown = countdown+5;
+            firstcard.setEnabled(false); //disables the button
+            secondcard.setEnabled(false);
+            firstcard.setMatched(true); //flags the button as having been matched
+            secondcard.setMatched(true);
+            if (this.gameEnds()){ScoreScreen.setText(Integer.toString(score1));
+            	if (score1==highestscore) {
+                    savehighscore(); 
+            	    int response =  JOptionPane.showConfirmDialog(this, "Congrats! YOU ACHIEVED THE HIGHEST SCORE!\n"+nameplayer+" YOUR SCORE IS: "+Integer.toString(score1)+"\n Start a Second Game?","Confirm",JOptionPane.YES_NO_OPTION,JOptionPane.QUESTION_MESSAGE);
+                    if (response == JOptionPane.NO_OPTION) {
+                        dispose();
+                } 
+                    else if (response == JOptionPane.YES_OPTION) {
+                 	   dispose();
+                 	   new Concentration();
+                 	   randNum=0;
+                 	   
+                }
+            	
+            	}
+            	else if(score1>0) {
+               int response =  JOptionPane.showConfirmDialog(this, "Congrats! YOU WIN THE GAME!\n"+nameplayer+" YOUR SCORE IS: "+Integer.toString(score1)+"\n Start a Second Game?","Confirm",JOptionPane.YES_NO_OPTION,JOptionPane.QUESTION_MESSAGE);
+               if (response == JOptionPane.NO_OPTION) {
+                   dispose();
+           } 
+               else if (response == JOptionPane.YES_OPTION) {
+            	   dispose();
+            	   new Concentration();
+            	   randNum=0;
+            	   
+           } 
+            
+           
+            }
+            	else if (score1<=0) {
+            		int response =  JOptionPane.showConfirmDialog(this, "YOU LOST THE GAME!\n"+"YOUR SCORE IS: "+Integer.toString(score1)+"\n Start a Second Game?","Confirm",JOptionPane.YES_NO_OPTION,JOptionPane.QUESTION_MESSAGE);
+                    if (response == JOptionPane.NO_OPTION) {
+                        dispose();
+                } 
+                    else if (response == JOptionPane.YES_OPTION) {
+                 	   dispose();
+                 	   new Concentration();
+                 	   randNum=0;
+                 	   
+                } 
+            		
+            	}
+            
+            
+            }
+        }
+
+        else{
+        	countdown=countdown-1;
+        	score1 = score1+scorepenalty;
+            firstcard.setIcon(new ImageIcon(getClass().getResource("gamepictures/11.png")));
+            secondcard.setIcon(new ImageIcon(getClass().getResource("gamepictures/11.png")));
+            
+        }
+        temporarycard = firstcard;
+        firstcard = secondcard = null; //reset c1 and c2 (empties them)
+        ScoreScreen.setText(Integer.toString(score1));
+        System.out.println("your score is:"+score1);
+    }
+    		
+    private void savehighscore() {
+    	
+		try {
+			FileWriter fw;
+			fw = new FileWriter("C:\\Users\\user\\Desktop\\Java Project\\Matchingcardsgame\\src\\myscore.txt",true);
+	    	fw.write(nameplayer+" has achieved the highest score in the"+Integer.toString(rows)+"*"+Integer.toString(columns)+" of"+Integer.toString(highestscore)+"\n");
+	    	fw.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+    	
+
+    }
+    
+    private boolean gameEnds(){
+        for(int k = 0; k<this.cards.size(); k++){
+        if((this.cards.get(k)).getMatched() == false){
+        			return false;}
+        }
+        
+        
+        stopwatch.stop();
+        
+    
+        return true;
+        
+    }
+    
+    
+    public static void main(String[] args){
+		new Concentration();
+    	
+}
+}
